@@ -27,10 +27,10 @@ class EncoderBlock(nn.Module):
                 dropout: dropout percentage
         """
         self.multiheadattn = nn.MultiheadAttention(emb_dim, num_heads , batch_first=True)
-        self.norm1 = nn.LayerNorm(feedforward_dim)
+        self.norm1 = nn.LayerNorm(emb_dim)
         
         self.feedforward = FeedForward(emb_dim, feedforward_dim)
-        self.norm2 = nn.LayerNorm(feedforward_dim)
+        self.norm2 = nn.LayerNorm(emb_dim)
         
         self.dropout = nn.Dropout(p=dropout)
 
@@ -59,8 +59,9 @@ class Encoder(nn.Module):
     """
     
     def __init__(self, num_enc_layers, num_heads, emb_dim, feedforward_dim, dropout=0):
+        super().__init__()
         self.layers = nn.ModuleList(
-            [EncoderBlock(num_heads, emb_dim, feedforward_dim, dropout)] for _ in range(num_enc_layers)
+            [EncoderBlock(num_heads, emb_dim, feedforward_dim, dropout) for _ in range(num_enc_layers)] 
         )
     
     def forward(self, x):

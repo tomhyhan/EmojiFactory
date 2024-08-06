@@ -30,17 +30,16 @@ class DecoderBlock(nn.Module):
         """
         super().__init__()
         self.multiheadattn = nn.MultiheadAttention(emb_dim, num_heads, batch_first=True)
-        self.norm1 = nn.LayerNorm(feedforward_dim) 
+        self.norm1 = nn.LayerNorm(emb_dim) 
         
         self.crossheadattn = nn.MultiheadAttention(emb_dim, num_heads, batch_first=True)       
-        self.norm2 = nn.LayerNorm(feedforward_dim)
+        self.norm2 = nn.LayerNorm(emb_dim)
         
         self.feedforward = FeedForward(emb_dim, feedforward_dim)
-        self.norm3 = nn.LayerNorm(feedforward_dim)
+        self.norm3 = nn.LayerNorm(emb_dim)
         self.dropout = nn.Dropout(dropout)
         self.gelu = nn.GELU()
 
-        self.proj_sentiment_to_emb = nn.Linear(self.emb+1, self.emb)
         
     def forward(self, dec_inp, enc_inp, mask):
         """
@@ -52,13 +51,12 @@ class DecoderBlock(nn.Module):
             outputs:
                 out: (N, K, M)
         """        
-        enc_inp1 = self.proj_sentiment_to_emb(enc_inp)
         
         out1, self.weights_softmax = self.multiheadattn(dec_inp, dec_inp, dec_inp, attn_mask=mask)
         out1 = self.dropout(out1)
         out2 = self.norm1(dec_inp + out1)
         
-        out3, self.weights_softmax_cross = self.crossheadattn(out2, enc_inp1, enc_inp1)
+        out3, self.weights_softmax_cross = self.crossheadattn(out2, enc_inp, enc_inp)
         out3 = self.dropout(out3)
         out4 = self.norm2(out3 + out2)
         
@@ -77,7 +75,8 @@ class Decoder(nn.Module):
     """
     
     def __init__(self, num_dec_layers, num_heads, emb_dim, feedforward_dim, dropout, vocab_len):
-        self.layer = nn.ModuleList(
+        super().__init__()
+        self.layers = nn.ModuleList(
             [DecoderBlock(num_heads, emb_dim, feedforward_dim, dropout) for _ in range(num_dec_layers)]
         )
         

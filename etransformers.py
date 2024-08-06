@@ -14,8 +14,8 @@ class EmojiTransformers(nn.Module):
         
         self.embedding = nn.Embedding(vocab_len, emb_dim)
         
-        self.encoder = Encoder(num_enc_layers, num_heads, emb_dim+1, feedforward_dim, dropout)        
-        self.decoder = Decoder(num_dec_layers, num_heads, emb_dim, feedforward_dim, dropout)        
+        self.encoder = Encoder(num_enc_layers, num_heads, emb_dim, feedforward_dim, dropout)        
+        self.decoder = Decoder(num_dec_layers, num_heads, emb_dim, feedforward_dim, dropout, vocab_len)        
     
         self.device = device
         self.dtype = dtype
@@ -39,13 +39,17 @@ class EmojiTransformers(nn.Module):
         _, K = ans.shape
         que_emb = self.embedding(que)
         que_emb_pos = que_emb + que_pos
-        
+
         ans_emb = self.embedding(ans)
         ans_emb_pos = ans_emb[:, :-1] + ans_pos[:, :-1]
         
-        sentiment_scores_expanded = sentiment.unsqueeze(1).expand(-1, que_emb.shape[1], -1)
+        sent_emb = self.embedding(sentiment.long())
+        # print("sentiment")
+        # print(que_emb.shape)
+        # print(sent_emb.shape)
         
-        enc_inp = torch.cat((que_emb_pos, sentiment_scores_expanded), dim=2)
+        enc_inp = que_emb + sent_emb
+        enc_inp = que_emb
         
         enc_out = self.encoder(enc_inp)
         
