@@ -9,5 +9,4 @@ def create_tokenizer():
     extra_vocabs = list(extra_vocabs.keys())
     
     tokenizer.add_tokens(extra_vocabs)
-    
     return tokenizer

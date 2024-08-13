@@ -20,6 +20,7 @@ def train_model(
     model.to(device)
     
     iterations = 0 
+    print("start training...")
     for epoch in range(num_epochs):
         loss_history = []
         model.train()
@@ -31,7 +32,6 @@ def train_model(
             ans = ans.to(device)
             ans_pos = ans_pos.to(device)
             sentiments = sentiments.to(device)
-            
             gnd = ans[:,1:].contiguous().view(-1).long()
             
             if warmup_iterations and iterations == warmup_iterations:
@@ -41,13 +41,14 @@ def train_model(
             
             optimizer.zero_grad()
             pred = model(ques.long(), ques_pos, ans.long(), ans_pos, sentiments)
+            print(pred.shape, gnd.shape)
             loss = loss_func(pred, gnd)
             loss.backward()
             optimizer.step()
             
             loss_history.append(loss)
+            print(f"iterations: {iterations}")
             iterations += 1
-            
         avg_loss = sum(loss_history) / len(loss_history)
         print(f"Epoch: {epoch + 1}, Iterations: {iterations}, Average loss: {avg_loss}")
     

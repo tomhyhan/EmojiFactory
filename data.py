@@ -51,18 +51,24 @@ class CreateData(Dataset):
 
         self.seq_pos = pos_enc(self.max_length, self.emb_dim)
     
+        self.null_token = "[NULL]"
+        
     def __len__(self):
         return len(self.data)
     
     def __getitem__(self, idx):
-        text = self.data[idx]["text"]
-        output = self.data[idx]["emoji"]
+        text = self.data[idx]["text"] or self.null_token
+        output = self.data[idx]["emoji"] or self.null_token
         
+        if text is None or output is None:
+            text = ""
+            output = ""
+            
         inp_seq = self.tokenizer(text, padding='max_length', truncation=True, max_length=self.max_length, return_tensors='pt')["input_ids"]
 
         out_seq = self.tokenizer(output, padding='max_length', truncation=True, max_length=self.max_length, return_tensors='pt')["input_ids"]
         
-        sentiment = torch.tensor([self.sentiment_analyzer.polarity_scores(text)["compound"]])
+        sentiment = torch.tensor([self.sentiment_analyzer.polarity_scores(text or "")["compound"]])
         
         return inp_seq[0], self.seq_pos[0], out_seq[0], self.seq_pos[0], sentiment 
         
